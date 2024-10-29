@@ -230,5 +230,3 @@ document.addEventListener("keyup", (e) => {
   if (e.key === "ArrowLeft") boat.moveLeft = false;
   if (e.key === "ArrowRight") boat.moveRight = false;
 });
-
-// Inicia o

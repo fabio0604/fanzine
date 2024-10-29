@@ -35,25 +35,37 @@ function createObstacle() {
   obstacles.push(obstacle);
 }
 
-// Função para desenhar o barco com detalhes em pixel art
+// Função para desenhar o barco com mais detalhes em pixel art
 function drawBoat() {
-  // Base do barco
-  ctx.fillStyle = "#8B4513"; // Marrom
-  ctx.fillRect(boat.x, boat.y + 20, boat.width, boat.height - 20);
+  // Casco inferior do barco (sombra)
+  ctx.fillStyle = "#5A3D31"; // Marrom escuro
+  ctx.fillRect(boat.x, boat.y + 30, boat.width, boat.height - 30);
 
-  // Detalhes do casco do barco
+  // Casco superior do barco
+  ctx.fillStyle = "#8B4513"; // Marrom médio
+  ctx.fillRect(boat.x + 4, boat.y + 34, boat.width - 8, boat.height - 34);
+
+  // Detalhes do barco (decoração)
   ctx.fillStyle = "#D2B48C"; // Bege
-  ctx.fillRect(boat.x + 10, boat.y + 40, boat.width - 20, 10);
+  ctx.fillRect(boat.x + 10, boat.y + 45, boat.width - 20, 5);
 
-  // Mastro
-  ctx.fillStyle = "#000000"; // Preto
-  ctx.fillRect(boat.x + boat.width / 2 - 2, boat.y, 4, 20);
+  // Mastro e bandeira
+  ctx.fillStyle = "#333333"; // Cor do mastro
+  ctx.fillRect(boat.x + boat.width / 2 - 2, boat.y + 5, 4, 25);
 
-  // Vela
-  ctx.fillStyle = "#FFFFFF"; // Branco
+  // Vela esquerda (triângulo)
+  ctx.fillStyle = "#FFFFFF";
   ctx.beginPath();
-  ctx.moveTo(boat.x + boat.width / 2, boat.y); // topo do mastro
-  ctx.lineTo(boat.x + boat.width / 2 + 10, boat.y + 20); // canto direito
+  ctx.moveTo(boat.x + boat.width / 2, boat.y + 5); // topo do mastro
+  ctx.lineTo(boat.x + boat.width / 2 - 15, boat.y + 20); // canto esquerdo
+  ctx.lineTo(boat.x + boat.width / 2, boat.y + 20); // base do mastro
+  ctx.fill();
+
+  // Vela direita (triângulo)
+  ctx.fillStyle = "#F0F0F0"; // Sutilmente diferente para um efeito de luz
+  ctx.beginPath();
+  ctx.moveTo(boat.x + boat.width / 2, boat.y + 5); // topo do mastro
+  ctx.lineTo(boat.x + boat.width / 2 + 15, boat.y + 20); // canto direito
   ctx.lineTo(boat.x + boat.width / 2, boat.y + 20); // base do mastro
   ctx.fill();
 }

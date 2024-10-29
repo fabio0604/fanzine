@@ -16,11 +16,14 @@ const boat = {
   speed: 5,
   moveUp: false,
   moveDown: false,
+  moveLeft: false,
+  moveRight: false,
 };
 
-// Lista de obstáculos e tiros de canhão
+// Lista de obstáculos, tiros de canhão do inimigo e tiros do barco
 const obstacles = [];
 const cannonballs = [];
+const boatShots = [];
 
 // Função para criar um novo obstáculo
 function createObstacle() {
@@ -32,10 +35,11 @@ function createObstacle() {
     width: width,
     height: 30,
     speed: gameSpeed,
+    hit: false,
   };
   obstacles.push(obstacle);
 
-  // Dispara tiros de canhão em intervalos aleatórios
+  // Dispara tiros de canhão do obstáculo em intervalos aleatórios
   setInterval(() => {
     if (!isGameOver) {
       cannonballs.push({
@@ -48,7 +52,7 @@ function createObstacle() {
   }, Math.floor(Math.random() * 2000) + 1000); // Intervalo de 1 a 3 segundos
 }
 
-// Função para desenhar o barco com nova perspectiva
+// Função para desenhar o barco
 function drawBoat() {
   // Casco do barco
   ctx.fillStyle = "#8B4513"; // Marrom
@@ -69,20 +73,34 @@ function drawBoat() {
   ctx.fill();
 }
 
-// Função para desenhar obstáculos em pixel art
+// Função para desenhar obstáculos
 function drawObstacles() {
   obstacles.forEach((obstacle) => {
     ctx.fillStyle = "#5A3D31"; // Marrom dos obstáculos
     ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-
-    // Canhões no obstáculo (pequenos retângulos pretos)
     ctx.fillStyle = "#000000";
     ctx.fillRect(obstacle.x + 5, obstacle.y + obstacle.height - 5, 8, 5);
     ctx.fillRect(obstacle.x + obstacle.width - 13, obstacle.y + obstacle.height - 5, 8, 5);
   });
 }
 
-// Função para desenhar e movimentar os tiros de canhão
+// Função para desenhar e movimentar os tiros de canhão do barco
+function drawBoatShots() {
+  ctx.fillStyle = "#FF0000"; // Cor dos tiros do barco
+  boatShots.forEach((shot, index) => {
+    ctx.beginPath();
+    ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
+    ctx.fill();
+    shot.y -= shot.speed; // Move o tiro para cima
+
+    // Remove o tiro se sair da tela
+    if (shot.y < 0) {
+      boatShots.splice(index, 1);
+    }
+  });
+}
+
+// Função para desenhar e movimentar os tiros de canhão inimigos
 function drawCannonballs() {
   ctx.fillStyle = "#333333"; // Cor das bolas de canhão
   cannonballs.forEach((cannonball, index) => {
@@ -98,22 +116,9 @@ function drawCannonballs() {
   });
 }
 
-// Movimenta o barco para cima e para baixo
-function moveBoat() {
-  if (boat.moveUp && boat.y > 0) boat.y -= boat.speed;
-  if (boat.moveDown && boat.y + boat.height < canvas.height) boat.y += boat.speed;
-}
-
-// Movimenta os obstáculos para baixo
-function moveObstacles() {
-  obstacles.forEach((obstacle) => {
-    obstacle.y += obstacle.speed;
-  });
-}
-
-// Verifica colisões entre o barco e os obstáculos ou bolas de canhão
-function checkCollisions() {
-  obstacles.forEach((obstacle) => {
+// Função para detectar colisões e criar explosões
+function detectCollisions() {
+  obstacles.forEach((obstacle, obsIndex) => {
     if (
       boat.x < obstacle.x + obstacle.width &&
       boat.x + boat.width > obstacle.x &&
@@ -122,8 +127,24 @@ function checkCollisions() {
     ) {
       isGameOver = true;
     }
+
+    // Verifica colisão dos tiros do barco com obstáculos
+    boatShots.forEach((shot, shotIndex) => {
+      if (
+        shot.x > obstacle.x &&
+        shot.x < obstacle.x + obstacle.width &&
+        shot.y > obstacle.y &&
+        shot.y < obstacle.y + obstacle.height
+      ) {
+        // Explosão
+        obstacles.splice(obsIndex, 1); // Remove o obstáculo
+        boatShots.splice(shotIndex, 1); // Remove o tiro
+        score += 10; // Aumenta o placar
+      }
+    });
   });
 
+  // Verifica colisão das bolas de canhão inimigas com o barco
   cannonballs.forEach((cannonball) => {
     if (
       boat.x < cannonball.x + cannonball.radius &&
@@ -136,10 +157,24 @@ function checkCollisions() {
   });
 }
 
+// Movimenta o barco
+function moveBoat() {
+  if (boat.moveUp && boat.y > 0) boat.y -= boat.speed;
+  if (boat.moveDown && boat.y + boat.height < canvas.height) boat.y += boat.speed;
+  if (boat.moveLeft && boat.x > 0) boat.x -= boat.speed;
+  if (boat.moveRight && boat.x + boat.width < canvas.width) boat.x += boat.speed;
+}
+
+// Movimenta os obstáculos
+function moveObstacles() {
+  obstacles.forEach((obstacle) => {
+    obstacle.y += obstacle.speed;
+  });
+}
+
 // Atualiza a pontuação
 function updateScore() {
-  score += 1;
-  document.getElementById("score").innerText = score;
+  document.getElementById("score").innerText = "Score: " + score;
 }
 
 // Função de atualização do jogo
@@ -150,26 +185,25 @@ function update() {
     return;
   }
 
-  // Limpa o canvas antes de redesenhar
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   drawBoat(); // Desenha o barco
   drawObstacles(); // Desenha os obstáculos
-  drawCannonballs(); // Desenha os tiros de canhão
+  drawCannonballs(); // Desenha os tiros de canhão inimigos
+  drawBoatShots(); // Desenha os tiros do barco
+  detectCollisions(); // Verifica colisões
 
   moveBoat(); // Movimenta o barco
   moveObstacles(); // Movimenta os obstáculos
 
-  // Remove obstáculos que saíram da tela e cria novos
   obstacles.forEach((obstacle, index) => {
     if (obstacle.y > canvas.height) {
       obstacles.splice(index, 1);
+      score += 1; // Aumenta a pontuação para cada obstáculo evitado
       updateScore();
       createObstacle();
     }
   });
-
-  checkCollisions(); // Verifica colisões
 
   requestAnimationFrame(update); // Loop do jogo
 }
@@ -178,13 +212,23 @@ function update() {
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowUp") boat.moveUp = true;
   if (e.key === "ArrowDown") boat.moveDown = true;
+  if (e.key === "ArrowLeft") boat.moveLeft = true;
+  if (e.key === "ArrowRight") boat.moveRight = true;
+  if (e.key === " ") { // Barra de espaço para disparar
+    boatShots.push({
+      x: boat.x + boat.width / 2,
+      y: boat.y,
+      radius: 4,
+      speed: 7,
+    });
+  }
 });
 
 document.addEventListener("keyup", (e) => {
   if (e.key === "ArrowUp") boat.moveUp = false;
   if (e.key === "ArrowDown") boat.moveDown = false;
+  if (e.key === "ArrowLeft") boat.moveLeft = false;
+  if (e.key === "ArrowRight") boat.moveRight = false;
 });
 
-// Inicia o jogo
-createObstacle();
-update();
+// Inicia o
